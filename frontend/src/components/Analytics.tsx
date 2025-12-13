@@ -65,13 +65,13 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
   const speedScore = reactionTestResult ? Math.min(100, 10000 / (reactionTestResult.score || 500)) : 0;
 
   // Use ML model predictions if available, otherwise use test-based scores
-  const radarData = [
-    { subject: 'Speed', A: latestMetrics?.speed ?? speedScore, fullMark: 100 },
-    { subject: 'Memory', A: latestMetrics?.memory ?? getLatestScore(TestType.PATTERN), fullMark: 100 },
-    { subject: 'Focus', A: latestMetrics?.focus ?? getLatestScore(TestType.NPBACK), fullMark: 100 },
-    { subject: 'Flexibility', A: latestMetrics?.flexibility ?? getLatestScore(TestType.SEQUENCE), fullMark: 100 },
-    { subject: 'Attention', A: latestMetrics?.attention ?? getLatestScore(TestType.STROOP), fullMark: 100 },
-  ];
+ const radarData = [
+  { subject: 'Speed', A: latestMetrics?.speed ?? speedScore, fullMark: 100 },
+  { subject: 'Flexibility', A: latestMetrics?.flexibility ?? getLatestScore(TestType.SEQUENCE), fullMark: 100 },
+  { subject: 'Memory', A: latestMetrics?.memory ?? getLatestScore(TestType.PATTERN), fullMark: 100 },
+  { subject: 'Focus', A: latestMetrics?.focus ?? getLatestScore(TestType.NPBACK), fullMark: 100 },
+  { subject: 'Attention', A: latestMetrics?.attention ?? getLatestScore(TestType.STROOP), fullMark: 100 },
+];
 
 
   return (
@@ -125,7 +125,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
           </div>
           {radarData.some(d => d.A > 0) ? (
             <div className="w-full">
-                <RadarChart width={600} height={256} cx={300} cy={128} outerRadius={110} data={radarData}>
+                <RadarChart width={600} height={256} cx={300} cy={160} outerRadius={120} data={radarData.map(d => ({ ...d, A: Math.max(0, Math.min(100, d.A <= 1 ? d.A * 100 : d.A)) }))}>
                   <PolarGrid stroke="#334155" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
