@@ -1,13 +1,28 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { Brain, Activity, Zap, Grid, LayoutGrid, Timer, BarChart3, Menu, X, CheckCircle2, BrainCogIcon } from 'lucide-react';
+import {
+  Brain,
+  Activity,
+  Zap,
+  Grid,
+  LayoutGrid,
+  Timer,
+  BarChart3,
+  Menu,
+  X,
+  CheckCircle2,
+  BrainCogIcon,
+  LogOut,
+} from 'lucide-react';
 import { ReactionTest } from './components/tests/ReactionTest';
 import { PatternTest } from './components/tests/PatternTest';
 import { StroopTest } from './components/tests/StroopTest';
 import { SequenceTest } from './components/tests/SequenceTest';
 import { NBackTest } from './components/tests/NBackTest';
 import { Button } from './components/Button';
-import { getProfile, saveResult, saveMetrics, clearData } from './services/storageService';
-import { analyzePerformance } from './services/geminiService';import type { TestResult, UserProfile } from '@/types';
+import { analyzePerformance } from './services/geminiService';
+import { authApi, profileApi, getApiBase } from './services/apiService';
+import { Login } from './components/Login';
+import type { TestResult, UserProfile } from '@/types';
 
 // Lazy load Analytics to prevent Recharts import issues from crashing the whole app
 const Analytics = React.lazy(() => import('./components/Analytics').then(module => ({ default: module.Analytics })));
@@ -44,20 +59,81 @@ class AnalyticsErrorBoundary extends React.Component<{children: React.ReactNode}
 // Simple Router State
 type View = 'dashboard' | 'reaction' | 'pattern' | 'stroop' | 'sequence' | 'nback';
 
+const emptyProfile: UserProfile = {
+  name: 'Explorer',
+  results: [],
+};
+
 const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
-  const [profile, setProfile] = useState<UserProfile>(getProfile());
+  const [profile, setProfile] = useState<UserProfile>(emptyProfile);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'loading' | 'authenticated' | 'unauthenticated'>('loading');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
 
   useEffect(() => {
-    // Refresh profile on mount to get latest from localstorage
-    setProfile(getProfile());
+    const bootstrap = async () => {
+      try {
+        const { profile } = await profileApi.fetchProfile();
+        setProfile(profile);
+        setAuthStatus('authenticated');
+      } catch (error) {
+        setAuthStatus('unauthenticated');
+      }
+    };
+
+    bootstrap();
   }, []);
 
-  const handleTestComplete = (result: TestResult) => {
-    const updated = saveResult(result);
-    setProfile(updated);
+  const handleAuthSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setAuthError(null);
+
+    try {
+      if (authMode === 'register') {
+        await authApi.register(authForm.name.trim(), authForm.email.trim(), authForm.password);
+        setBanner('Account created. Session stored in secure cookie.');
+      } else {
+        await authApi.login(authForm.email.trim(), authForm.password);
+        setBanner('Welcome back. Session restored.');
+      }
+
+      const { profile } = await profileApi.fetchProfile();
+      setProfile(profile);
+      setAuthStatus('authenticated');
+      setMenuOpen(false);
+    } catch (error: any) {
+      setAuthError(error?.message || 'Unable to authenticate. Please retry.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch (error) {
+      // Best-effort logout; ignore network errors here
+    }
+    setProfile(emptyProfile);
+    setAuthStatus('unauthenticated');
+    setCurrentView('dashboard');
+  };
+
+  const handleTestComplete = async (result: TestResult) => {
+    try {
+      const { profile: updated } = await profileApi.saveResult(result);
+      setProfile(updated);
+      setBanner('Result synced to backend');
+    } catch (error: any) {
+      setBanner(error?.message || 'Could not save result');
+    }
     setCurrentView('dashboard');
   };
 
@@ -65,18 +141,51 @@ const App = () => {
     setIsAnalyzing(true);
     try {
       const metrics = await analyzePerformance(profile.results);
-      const updated = saveMetrics(metrics);
+      const { profile: updated } = await profileApi.saveMetrics(metrics);
       setProfile(updated);
+      setBanner('AI metrics saved to backend');
+    } catch (error: any) {
+      setBanner(error?.message || 'Could not save metrics');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const clearHistory = () => {
-    if(confirm("Are you sure you want to clear all data?")) {
-      clearData();
-      setProfile(getProfile());
+  const clearHistory = async () => {
+    if (!confirm('Are you sure you want to clear all data?')) return;
+
+    try {
+      const { profile } = await profileApi.clearData();
+      setProfile(profile);
+      setBanner('History cleared on backend');
+    } catch (error: any) {
+      setBanner(error?.message || 'Could not clear data');
     }
+  };
+
+  const renderAuthScreen = () => {
+    if (authStatus === 'loading') {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-stone-950 text-white">
+          <div className="px-6 py-4 bg-stone-900 border border-stone-800 rounded-xl shadow-2xl">
+            Checking session...
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Login
+        mode={authMode}
+        form={authForm}
+        error={authError}
+        isSubmitting={isSubmitting}
+        apiBase={getApiBase()}
+        onModeToggle={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+        onChange={(fields) => setAuthForm({ ...authForm, ...fields })}
+        onSubmit={handleAuthSubmit}
+      />
+    );
   };
 
   const renderContent = () => {
@@ -88,19 +197,25 @@ const App = () => {
       case 'nback': return <TestWrapper title="N-Back Test" onBack={() => setCurrentView('dashboard')}><NBackTest onComplete={handleTestComplete} /></TestWrapper>;
       default: return (
         <div className="space-y-8 animate-fade-in">
-          
           {/* Header Stats */}
           <div className="rounded-2xl p-8 shadow-xl border border-stone-700/50 relative overflow-hidden">
-             <div className="relative z-10">
-               <h1 className="text-3xl font-bold text-white mb-2">Welcome Back, {profile.name}</h1>
-               <p className="text-indigo-200 mb-6 max-w-xl">
-                 Your cognitive health requires consistent training. You've completed {profile.results.length} tests so far.
-               </p>
-               <div className="flex gap-4">
-                 <Button onClick={handleAIAnalysis} disabled={isAnalyzing || profile.results.length === 0}>
-                   {isAnalyzing ? "Analyzing..." : "Generate AI Analysis"}
-                 </Button>
-                 <Button variant="secondary" onClick={clearHistory}>Reset Data</Button>
+             <div className="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+               <div>
+                 <h1 className="text-3xl font-bold text-white mb-2">Welcome Back, {profile.name}</h1>
+                 <p className="text-indigo-200 mb-4 max-w-2xl">
+                   Your cognitive health stays synced across devices. You have completed {profile.results.length} tests.
+                 </p>
+                 <div className="flex flex-wrap gap-3">
+                   <Button onClick={handleAIAnalysis} disabled={isAnalyzing || profile.results.length === 0}>
+                     {isAnalyzing ? "Analyzing..." : "Generate AI Analysis"}
+                   </Button>
+                   <Button variant="secondary" onClick={clearHistory}>Reset Data</Button>
+                 </div>
+               </div>
+               <div className="bg-stone-900/70 border border-stone-800 rounded-xl p-4 text-sm text-stone-200 flex flex-col gap-2 min-w-[260px]">
+                 <div className="flex items-center justify-between"><span>API</span><span className="text-indigo-200">{getApiBase()}</span></div>
+                 <div className="flex items-center justify-between"><span>Session</span><span className="text-emerald-300">Cookie + CORS</span></div>
+                 <div className="flex items-center justify-between"><span>Results</span><span>{profile.results.length}</span></div>
                </div>
              </div>
           </div>
@@ -161,6 +276,8 @@ const App = () => {
     }
   };
 
+  if (authStatus !== 'authenticated') return renderAuthScreen();
+
   return (
     <div className="min-h-screen bg-stone-900 text-stone-100 flex">
       {/* Sidebar Navigation (Desktop) */}
@@ -180,6 +297,12 @@ const App = () => {
             <NavItem active={currentView === 'sequence'} onClick={() => {setCurrentView('sequence'); setMenuOpen(false);}} icon={<Activity size={20}/>} label="Sequence" />
             <NavItem active={currentView === 'nback'} onClick={() => {setCurrentView('nback'); setMenuOpen(false);}} icon={<Timer size={20}/>} label="N-Back" />
           </nav>
+
+          <div className="mt-8 pt-6 border-t border-stone-800">
+            <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleLogout}>
+              <LogOut className="w-4 h-4" /> Logout
+            </Button>
+          </div>
         </div>
       </aside>
 
@@ -195,12 +318,23 @@ const App = () => {
              <Brain className="w-6 h-6" />
              <span className="font-bold text-white">Cognitive Test</span>
           </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-stone-300">
-            {menuOpen ? <X /> : <Menu />}
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-stone-300">
+              {menuOpen ? <X /> : <Menu />}
+            </button>
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto space-y-4">
+          {banner && (
+            <div className="bg-indigo-600/10 border border-indigo-500/40 text-indigo-100 px-4 py-3 rounded-xl flex items-center justify-between">
+              <span>{banner}</span>
+              <button className="text-indigo-200" onClick={() => setBanner(null)}>x</button>
+            </div>
+          )}
           {renderContent()}
         </div>
       </main>
@@ -247,6 +381,13 @@ const TestWrapper = ({children, title, onBack}: any) => (
     <div className="flex-1 bg-stone-900/50 rounded-2xl border border-stone-800 p-8 relative overflow-hidden flex flex-col">
       {children}
     </div>
+  </div>
+);
+
+const StatCard = ({ label, value, subtle = false }: any) => (
+  <div className={`rounded-2xl border ${subtle ? 'border-white/10 bg-white/5' : 'border-stone-800 bg-stone-900'} p-4`}> 
+    <p className="text-xs uppercase tracking-wide text-stone-400">{label}</p>
+    <p className="text-lg font-semibold text-white truncate">{value}</p>
   </div>
 );
 
