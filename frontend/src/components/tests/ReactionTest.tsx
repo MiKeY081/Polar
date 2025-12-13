@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TestResult, TestType } from '../../types';
-import { Button } from '../ui/Button';
+import type { TestResult } from '@/types';
+import { TestType } from '@/types';
 import { Zap } from 'lucide-react';
 
 interface Props {

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { TestResult, TestType } from '../../types';
+import React, { useState, useEffect } from 'react';
+import type { TestResult } from '@/types';
+import { TestType } from '@/types';
 
 interface Props {
   onComplete: (result: TestResult) => void;

@@ -5,10 +5,9 @@ import { PatternTest } from './components/tests/PatternTest';
 import { StroopTest } from './components/tests/StroopTest';
 import { SequenceTest } from './components/tests/SequenceTest';
 import { NBackTest } from './components/tests/NBackTest';
-import { Button } from './components/ui/Button';
+import { Button } from './components/ui/button';
 import { getProfile, saveResult, saveMetrics, clearData } from './services/storageService';
-import { analyzePerformance } from './services/geminiService';
-import { TestResult, TestType, UserProfile } from './types';
+import { analyzePerformance } from './services/geminiService';import type { TestResult, UserProfile } from '@/types';
 
 // Lazy load Analytics to prevent Recharts import issues from crashing the whole app
 const Analytics = React.lazy(() => import('./components/Analytics').then(module => ({ default: module.Analytics })));

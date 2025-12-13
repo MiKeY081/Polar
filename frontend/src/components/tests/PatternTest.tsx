@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TestResult, TestType } from '../../types';
+import type { TestResult } from '@/types';
+import { TestType } from '@/types';
 import { Grid3X3 } from 'lucide-react';
-import { start } from 'repl';
 
 interface Props {
   onComplete: (result: TestResult) => void;

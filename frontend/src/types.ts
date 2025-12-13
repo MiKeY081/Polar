@@ -1,10 +1,12 @@
-export enum TestType {
-  REACTION = 'REACTION',
-  PATTERN = 'PATTERN',
-  STROOP = 'STROOP',
-  SEQUENCE = 'SEQUENCE',
-  NPBACK = 'N_BACK'
-}
+export const TestType = {
+  REACTION: 'REACTION',
+  PATTERN: 'PATTERN',
+  STROOP: 'STROOP',
+  SEQUENCE: 'SEQUENCE',
+  NPBACK: 'N_BACK'
+} as const;
+
+export type TestType = typeof TestType[keyof typeof TestType];
 
 export interface TestResult {
   id: string;
