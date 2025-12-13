@@ -29,7 +29,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
     .map((r, i) => ({
       id: `stroop-${i}`,
       date: new Date(r.timestamp).toISOString().slice(0,10),
-      attentionScore: r.accuracy,
+      attentionScore: r.accuracy * 100,
     }))
     .slice(-10);
 
