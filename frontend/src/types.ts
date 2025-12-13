@@ -19,6 +19,20 @@ export interface TestResult {
   meta: Record<string, any>; // Test specific data (e.g., falsePositives)
 }
 
+export interface MLAnalysis {
+  decisionConfidence: number;
+  cognitiveLoad: number;
+  fatigueIndex: number;
+  behaviorDrift: number;
+  speed: number;
+  memory: number;
+  focus: number;
+  flexibility: number;
+  attention: number;
+  drift: number;
+  analysisTimestamp: number;
+}
+
 export interface AdvancedMetrics {
   decisionConfidence: number; // 0-100
   cognitiveLoad: number; // 0-100
@@ -27,6 +41,13 @@ export interface AdvancedMetrics {
   analysisTimestamp: number;
   summary: string;
   anomalies: string[];
+  // ML-derived cognitive scores
+  speed?: number;
+  memory?: number;
+  focus?: number;
+  flexibility?: number;
+  attention?: number;
+  drift?: number;
 }
 
 export interface UserProfile {

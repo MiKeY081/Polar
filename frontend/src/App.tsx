@@ -212,11 +212,7 @@ const App = () => {
                    <Button variant="secondary" onClick={clearHistory}>Reset Data</Button>
                  </div>
                </div>
-               <div className="bg-stone-900/70 border border-stone-800 rounded-xl p-4 text-sm text-stone-200 flex flex-col gap-2 min-w-[260px]">
-                 <div className="flex items-center justify-between"><span>API</span><span className="text-indigo-200">{getApiBase()}</span></div>
-                 <div className="flex items-center justify-between"><span>Session</span><span className="text-emerald-300">Cookie + CORS</span></div>
-                 <div className="flex items-center justify-between"><span>Results</span><span>{profile.results.length}</span></div>
-               </div>
+              
              </div>
           </div>
 

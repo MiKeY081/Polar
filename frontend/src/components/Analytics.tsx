@@ -54,7 +54,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 
 
   // Radar Data for Cognitive Profile (Normalized)
-  // We aggregate latest scores for each category
+  // Prefer ML-derived scores if available, otherwise fall back to test-based calculations
   const getLatestScore = (type: string) => {
     const runs = results.filter(r => r.type === type);
     if (runs.length === 0) return 0;
@@ -64,12 +64,13 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
   const reactionTestResult = results.find(r => r.type === TestType.REACTION);
   const speedScore = reactionTestResult ? Math.min(100, 10000 / (reactionTestResult.score || 500)) : 0;
 
+  // Use ML model predictions if available, otherwise use test-based scores
   const radarData = [
-    { subject: 'Speed', A: speedScore, fullMark: 100 },
-    { subject: 'Memory', A: getLatestScore(TestType.PATTERN), fullMark: 100 },
-    { subject: 'Attention', A: getLatestScore(TestType.STROOP), fullMark: 100 },
-    { subject: 'Flexibility', A: getLatestScore(TestType.SEQUENCE), fullMark: 100 },
-    { subject: 'Focus', A: getLatestScore(TestType.NPBACK), fullMark: 100 },
+    { subject: 'Speed', A: latestMetrics?.speed ?? speedScore, fullMark: 100 },
+    { subject: 'Memory', A: latestMetrics?.memory ?? getLatestScore(TestType.PATTERN), fullMark: 100 },
+    { subject: 'Focus', A: latestMetrics?.focus ?? getLatestScore(TestType.NPBACK), fullMark: 100 },
+    { subject: 'Flexibility', A: latestMetrics?.flexibility ?? getLatestScore(TestType.SEQUENCE), fullMark: 100 },
+    { subject: 'Attention', A: latestMetrics?.attention ?? getLatestScore(TestType.STROOP), fullMark: 100 },
   ];
 
 
@@ -78,10 +79,10 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
       {/* Metrics Cards */}
       {latestMetrics && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard title="Decision Confidence" value={latestMetrics.decisionConfidence} color="text-blue-400" />
-          <MetricCard title="Cognitive Load" value={latestMetrics.cognitiveLoad} color="text-yellow-400" />
-          <MetricCard title="Fatigue Index" value={latestMetrics.fatigueIndex} color="text-red-400" />
-          <MetricCard title="Behavior Drift" value={latestMetrics.behaviorDrift} color="text-purple-400" />
+          <MetricCard title="Decision Confidence" value={Number((latestMetrics.decisionConfidence * 100).toFixed(1))} color="text-blue-400" />
+          <MetricCard title="Cognitive Load" value={Number((latestMetrics.cognitiveLoad * 100).toFixed(1))} color="text-yellow-400" />
+          <MetricCard title="Fatigue Index" value={Number((latestMetrics.fatigueIndex * 100).toFixed(1))} color="text-red-400" />
+          <MetricCard title="Behavior Drift" value={Number((latestMetrics.behaviorDrift * 100).toFixed(1))} color="text-purple-400" />
         </div>
       )}
 
@@ -114,7 +115,14 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 
         {/* Cognitive Radar */}
         <div className="bg-stone-800 p-6 rounded-xl shadow-lg border border-stone-700">
-          <h3 className="text-lg font-semibold text-white mb-6">Cognitive Profile</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-white">Cognitive Profile</h3>
+            {latestMetrics?.speed !== undefined && (
+              <span className="text-xs bg-violet-600/20 text-violet-300 px-2 py-1 rounded-full border border-violet-500/30">
+                ML Powered
+              </span>
+            )}
+          </div>
           {radarData.some(d => d.A > 0) ? (
             <div className="w-full">
                 <RadarChart width={600} height={256} cx={300} cy={128} outerRadius={110} data={radarData}>
