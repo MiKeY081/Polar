@@ -1,79 +1,64 @@
 import numpy as np
 import pandas as pd
-import random
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
 
-def generate_player_trials(player_id, n_trials=500, drift=False):
-    """
-    Generate synthetic gameplay data for a single player.
-    Drift=True means player is impaired (slower, more errors).
-    """
+# Set seed for reproducibility
+np.random.seed(42)
+torch.manual_seed(42)
 
-    data = []
+# Number of samples
+N = 10000
 
-    # Base reaction parameters
-    base_rt = 300 if not drift else 420          # slower if drifting
-    rt_noise = 60 if not drift else 110          # inconsistent if drifting
+# Generate synthetic inputs (9 features)
+avgAccuracy = np.random.uniform(0.5, 1.0, N)  # High accuracy common
+stdAccuracy = np.random.uniform(0.05, 0.3, N)  # Low variance better
+Avgscore = np.random.uniform(50, 100, N)  # Scores 50-100
+AvgDuration = np.random.uniform(10, 60, N)  # Seconds
+std_duration = np.random.uniform(2, 20, N)  # Seconds variance
+meanRt = np.random.uniform(0.5, 2.0, N)  # Reaction time seconds
+stdRt = np.random.uniform(0.1, 0.5, N)  # RT variance
+AvgDifficulty = np.random.uniform(1, 10, N)  # Difficulty level
+MaxSequence = np.random.uniform(5, 20, N)  # Max sequence length
 
-    # Error probabilities
-    error_rate = 0.08 if not drift else 0.22     # more errors when drifting
-    fp_rate = 0.03 if not drift else 0.12        # false positives
-    fn_rate = 0.05 if not drift else 0.18        # misses
+# Stack inputs into X (N x 9)
+X = np.column_stack([avgAccuracy, stdAccuracy, Avgscore, AvgDuration, std_duration, 
+                     meanRt, stdRt, AvgDifficulty, MaxSequence])
 
-    fatigue_growth = (0.2 if drift else 0.08)    # increases reaction-time over trials
+# Normalize X to [0,1] for better training
+scaler_X = MinMaxScaler()
+X_norm = scaler_X.fit_transform(X)
 
-    show_time = 0
+# Compute intermediates (4 targets) with formulas + noise
+noise = np.random.normal(0, 0.05, (N, 4))
+decision_confidence = 0.7 * avgAccuracy - 0.3 * stdAccuracy
+cognitive_load = 0.3 * (AvgDuration / 60) + 0.3 * (meanRt / 2) + 0.4 * (AvgDifficulty / 10)
+fatigue_index = 0.4 * (1 - avgAccuracy) + 0.3 * (std_duration / 20) + 0.3 * (stdRt / 0.5)
+behavior_drift = 0.5 * stdAccuracy + 0.5 * stdRt
 
-    for trial in range(n_trials):
-        show_time += random.uniform(1, 3)
-
-        # Reaction time increases over time (fatigue)
-        fatigue_penalty = fatigue_growth * trial
-        reaction_time = np.random.normal(base_rt + fatigue_penalty, rt_noise)
-
-        # Binary: is this a matching stimulus?
-        is_match = random.choice([0, 1])
-
-        # Player response
-        clicked = random.choice([0, 1]) if random.random() < error_rate else is_match
-
-        # correctness logic
-        correct = 1 if clicked == is_match else 0
-
-        # false positive / negative
-        FP = 1 if clicked == 1 and is_match == 0 else 0
-        FN = 1 if clicked == 0 and is_match == 1 else 0
-
-        # Add to dataset
-        data.append({
-            "player_id": player_id,
-            "trial": trial + 1,
-            "reaction_time": max(100, reaction_time),
-            "is_match": is_match,
-            "clicked": clicked,
-            "correct": correct,
-            "FP": FP,
-            "FN": FN,
-            "fatigue_level": fatigue_penalty,
-            "drift_label": 1 if drift else 0
-        })
-
-    return data
+y1 = np.column_stack([decision_confidence, cognitive_load, fatigue_index, behavior_drift])
+y1 = np.clip(y1 + noise, 0, 1)  # Clamp to [0,1]
 
 
-def generate_full_dataset(n_players=20):
-    all_data = []
+# Compute finals (6 targets) from intermediates + noise
+noise2 = np.random.normal(0, 0.05, (N, 6))
+speed = 0.5 * (1 - cognitive_load) + 0.5 * (1 - fatigue_index)
+memory = 0.6 * decision_confidence + 0.4 * (1 - behavior_drift) + 0.1 * (MaxSequence / 20)  # Slight input bleed for realism
+focus = 0.5 * decision_confidence + 0.5 * (1 - behavior_drift)
+flexibility = 0.7 * (1 - cognitive_load) + 0.3 * decision_confidence
+attention = 0.4 * (1 - fatigue_index) + 0.3 * focus + 0.3 * (1 - behavior_drift)
+drift = behavior_drift  # Direct mapping with noise
 
-    for pid in range(n_players):
-        # 50% players are normal, 50% are drifted
-        drift = True if pid % 2 == 0 else False
-        all_data += generate_player_trials(pid, drift=drift)
+y2 = np.column_stack([speed, memory, focus, flexibility, attention, drift])
+y2 = np.clip(y2 + noise2, 0, 1)
 
-    return pd.DataFrame(all_data)
-
-
-# Generate + Save dataset
-df = generate_full_dataset()
-df.to_csv("synthetic_cognitive_dataset.csv", index=False)
-
-print("Dataset generated with shape:", df.shape)
-df.head()
+# Save to DataFrame for inspection (optional)
+df = pd.DataFrame(X, columns=['avgAccuracy', 'stdAccuracy', 'Avgscore', 'AvgDuration', 'std_duration', 
+                              'meanRt', 'stdRt', 'AvgDifficulty', 'MaxSequence'])
+df[['decision_confidence', 'cognitive_load', 'fatigue_index', 'behavior_drift']] = y1
+df[['speed', 'memory', 'focus', 'flexibility', 'attention', 'drift']] = y2
+df.to_csv('synthetic_data.csv', index=False) 
