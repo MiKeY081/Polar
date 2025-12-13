@@ -5,7 +5,7 @@ import express from "express";
 import morgan from "morgan";
 import { handleError } from "./middleware/error.handler";
 import authRoute from "./routes/auth.routes";
-import profileRoute from "./routes/profile.routes";
+// import profileRoute from "./routes/profile.routes";
 import { connectDB } from "./utils/connectDB";
 
 dotenv.config();
@@ -32,7 +32,7 @@ app.get("/", (req, res) => {
 
 // user defined middlewares
 app.use("/api/v1/auth", authRoute);
-app.use("/api/v1/profile", profileRoute);
+// app.use("/api/v1/profile", profileRoute);
 app.use(handleError);
 
 const PORT = 8001;
