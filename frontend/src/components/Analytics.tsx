@@ -3,7 +3,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend
 } from 'recharts';
-import { UserProfile, TestType } from '../types';
+import type { UserProfile } from '../types';
+import { TestType } from '../types';
 
 interface Props {
   profile: UserProfile;

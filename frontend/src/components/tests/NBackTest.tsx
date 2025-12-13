@@ -14,9 +14,8 @@ const DURATION = 2000; // ms per letter
 
 export const NBackTest: React.FC<Props> = ({ onComplete }) => {
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
-  const [history, setHistory] = useState<string[]>([]);
+  const [_history, setHistory] = useState<string[]>([]);
   const [score, setScore] = useState(0); // Correct responses
-  const [misses, setMisses] = useState(0);
   const [falsePositives, setFalsePositives] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userResponded, setUserResponded] = useState(false);
@@ -26,7 +25,7 @@ export const NBackTest: React.FC<Props> = ({ onComplete }) => {
   const sequenceRef = useRef<string[]>([]);
   
   useEffect(() => {
-    const seq = [];
+    const seq: string[] = [];
     for (let i = 0; i < TOTAL_TRIALS; i++) {
       // 30% chance to be a match of i - N
       if (i >= N && Math.random() < 0.3) {
