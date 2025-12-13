@@ -7,6 +7,10 @@ import time
 app = Flask(__name__)
 CORS(app)  # allow frontend calls
 
+@app.route("/", methods=["GET"])
+def index():
+    return "Cognitive Analysis Service is running."
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     data = request.get_json()
