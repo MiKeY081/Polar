@@ -82,7 +82,7 @@ export const StroopTest: React.FC<Props> = ({ onComplete }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px]">
-      <div className="text-slate-400 mb-8 font-mono">
+      <div className="text-stone-400 mb-8 font-mono">
         Trial {trials} / {MAX_TRIALS}
       </div>
 
@@ -102,14 +102,14 @@ export const StroopTest: React.FC<Props> = ({ onComplete }) => {
           <button
             key={c.name}
             onClick={() => handleAnswer(c.name)}
-            className="h-16 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 hover:border-slate-500 transition-all font-bold text-slate-200"
+            className="h-16 rounded-lg bg-stone-800 border border-stone-700 hover:bg-stone-700 hover:border-stone-500 transition-all font-bold text-stone-200"
           >
             {c.name}
           </button>
         ))}
       </div>
       
-      <p className="mt-8 text-slate-500 text-sm">
+      <p className="mt-8 text-stone-500 text-sm">
         Click the button that matches the <span className="text-white font-bold">INK COLOR</span> of the word.
       </p>
     </div>

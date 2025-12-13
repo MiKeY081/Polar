@@ -19,7 +19,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
     .filter(r => r.type === TestType.REACTION)
     .map((r, i) => ({
       id: `reaction-${i}`,
-      date: new Date(r.timestamp).toLocaleDateString(),
+      date: new Date(r.timestamp).toISOString().slice(0,10),
       reactionTime: r.score,
     }))
     .slice(-10);
@@ -28,7 +28,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
     .filter(r => r.type === TestType.STROOP)
     .map((r, i) => ({
       id: `stroop-${i}`,
-      date: new Date(r.timestamp).toLocaleDateString(),
+      date: new Date(r.timestamp).toISOString().slice(0,10),
       attentionScore: r.accuracy,
     }))
     .slice(-10);
@@ -44,6 +44,13 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
     }, [])
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(-10);
+
+  // Debug: log computed chart inputs
+  if (process.env.NODE_ENV !== 'production') {
+    // These logs help verify data plumbing when charts appear empty
+    console.log('[Analytics] results count:', results.length);
+    console.log('[Analytics] timelineData:', timelineData);
+  }
 
 
   // Radar Data for Cognitive Profile (Normalized)
@@ -65,6 +72,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
     { subject: 'Focus', A: getLatestScore(TestType.NPBACK), fullMark: 100 },
   ];
 
+
   return (
     <div className="space-y-8">
       {/* Metrics Cards */}
@@ -81,12 +89,11 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
       <div className="grid md:grid-cols-2 gap-8">
         
         {/* Weekly Drift Timeline */}
-        <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl shadow-lg border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-6">Performance Timeline</h3>
           {timelineData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={timelineData}>
+            <div className="">
+                <LineChart data={timelineData} width={500} height={256}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis dataKey="date" stroke="#94a3b8" tick={{fontSize: 12}} />
                   <YAxis stroke="#94a3b8" />
@@ -97,31 +104,28 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
                   <Line type="monotone" dataKey="reactionTime" stroke="#3b82f6" name="Reaction (ms)" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="attentionScore" stroke="#22c55e" name="Attention (%)" strokeWidth={2} />
                 </LineChart>
-              </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400">
+            <div className="h-64 flex items-center justify-center text-stone-400">
               <p>Complete Reaction Time or Stroop tests to view timeline data</p>
             </div>
           )}
         </div>
 
         {/* Cognitive Radar */}
-        <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl shadow-lg border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-6">Cognitive Profile</h3>
           {radarData.some(d => d.A > 0) ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+            <div className="w-full">
+                <RadarChart width={600} height={256} cx={300} cy={128} outerRadius={110} data={radarData}>
                   <PolarGrid stroke="#334155" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
                   <Radar name="User" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
                 </RadarChart>
-              </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400">
+            <div className="h-64 flex items-center justify-center text-stone-400">
               <p>Complete cognitive tests to view your profile</p>
             </div>
           )}
@@ -130,12 +134,12 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 
       {/* Anomalies & Summary */}
       {latestMetrics && (
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-4">AI Analysis</h3>
-          <p className="text-slate-300 mb-4 leading-relaxed">{latestMetrics.summary}</p>
+          <p className="text-stone-300 mb-4 leading-relaxed">{latestMetrics.summary}</p>
           {latestMetrics.anomalies.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Anomalies Detected</h4>
+              <h4 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-2">Anomalies Detected</h4>
               <ul className="list-disc list-inside text-yellow-500/90 text-sm space-y-1">
                 {latestMetrics.anomalies.map((a, i) => <li key={i}>{a}</li>)}
               </ul>
@@ -148,8 +152,8 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 };
 
 const MetricCard: React.FC<{title: string, value: number, color: string}> = ({ title, value, color }) => (
-  <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-    <div className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</div>
-    <div className={`text-3xl font-bold ${color}`}>{value}<span className="text-sm text-slate-600 ml-1">/100</span></div>
+  <div className="bg-stone-800 p-4 rounded-xl border border-stone-700">
+    <div className="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</div>
+    <div className={`text-3xl font-bold ${color}`}>{value}<span className="text-sm text-stone-600 ml-1">/100</span></div>
   </div>
 );

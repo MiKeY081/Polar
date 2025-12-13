@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '../ui/button';
+import { Button } from '../Button';
 import type { TestResult } from '@/types';
 import { TestType } from '@/types';
 
@@ -119,11 +119,11 @@ export const NBackTest: React.FC<Props> = ({ onComplete }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px]">
-      <div className="text-slate-500 mb-8 font-mono text-sm">
+      <div className="text-stone-500 mb-8 font-mono text-sm">
         2-BACK TEST | Trial {currentIndex + 1}/{TOTAL_TRIALS}
       </div>
 
-      <div className="relative w-48 h-48 flex items-center justify-center bg-slate-800 rounded-2xl border border-slate-700 mb-8">
+      <div className="relative w-48 h-48 flex items-center justify-center bg-stone-800 rounded-2xl border border-stone-700 mb-8">
         <span className="text-8xl font-bold text-white">{currentLetter}</span>
         
         {showFeedback === 'correct' && (
@@ -143,7 +143,7 @@ export const NBackTest: React.FC<Props> = ({ onComplete }) => {
         MATCH
       </Button>
 
-      <p className="mt-8 text-slate-500 text-sm max-w-sm text-center">
+      <p className="mt-8 text-stone-500 text-sm max-w-sm text-center">
         Press MATCH if the current letter is the same as the one shown <strong>2 steps ago</strong>.
       </p>
     </div>
