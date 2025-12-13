@@ -19,7 +19,7 @@ class AnalyticsErrorBoundary extends React.Component<{children: React.ReactNode}
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: any) {
+  static getDerivedStateFromError(_error: any) {
     return { hasError: true };
   }
 

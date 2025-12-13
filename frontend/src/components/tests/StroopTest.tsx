@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '../ui/button';
+import React, { useState, useEffect } from 'react';
 import { TestType, type TestResult } from '@/types';
 
 interface Props {

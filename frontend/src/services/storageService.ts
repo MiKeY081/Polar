@@ -11,6 +11,7 @@ const defaultProfile: UserProfile = {
 export const getProfile = (): UserProfile => {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
+    console.log(data)
     return data ? JSON.parse(data) : defaultProfile;
   } catch (error) {
     console.error("Failed to load profile from storage:", error);
