@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TestResult, TestType } from '../../types';
-import { Button } from '../ui/Button';
+import type { TestResult } from '@/types';
+import { TestType } from '@/types';
 import { Zap } from 'lucide-react';
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 export const ReactionTest: React.FC<Props> = ({ onComplete }) => {
   const [state, setState] = useState<'idle' | 'waiting' | 'ready' | 'finished'>('idle');
   const [startTime, setStartTime] = useState(0);
-  const [reactionTime, setReactionTime] = useState(0);
+  const [_reactionTime, setReactionTime] = useState(0);
   const [attempts, setAttempts] = useState<number[]>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
