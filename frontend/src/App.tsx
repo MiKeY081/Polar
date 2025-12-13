@@ -30,10 +30,10 @@ class AnalyticsErrorBoundary extends React.Component<{children: React.ReactNode}
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 text-center bg-slate-800 rounded-xl border border-red-500/30">
+        <div className="p-8 text-center bg-stone-800 rounded-xl border border-red-500/30">
           <BarChart3 className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-white mb-2">Analytics Visualization Unavailable</h3>
-          <p className="text-slate-400">The chart library failed to load. Your test data is still being saved.</p>
+          <p className="text-stone-400">The chart library failed to load. Your test data is still being saved.</p>
         </div>
       );
     }
@@ -90,7 +90,7 @@ const App = () => {
         <div className="space-y-8 animate-fade-in">
           
           {/* Header Stats */}
-          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-8 shadow-xl border border-slate-700/50 relative overflow-hidden">
+          <div className="rounded-2xl p-8 shadow-xl border border-stone-700/50 relative overflow-hidden">
              <div className="relative z-10">
                <h1 className="text-3xl font-bold text-white mb-2">Welcome Back, {profile.name}</h1>
                <p className="text-indigo-200 mb-6 max-w-xl">
@@ -151,7 +151,7 @@ const App = () => {
                 </Suspense>
               </AnalyticsErrorBoundary>
             ) : (
-              <div className="bg-stone-800/50 border border-stone-700 border-dashed rounded-xl p-12 text-center text-slate-500">
+              <div className="bg-stone-800/50 border border-stone-700 border-dashed rounded-xl p-12 text-center text-stone-500">
                 Complete some tests to view analytics.
               </div>
             )}
@@ -162,7 +162,7 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-900 text-slate-100 flex">
+    <div className="min-h-screen bg-stone-900 text-stone-100 flex">
       {/* Sidebar Navigation (Desktop) */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-stone-900 border-r border-stone-800 transform transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6">
@@ -173,7 +173,7 @@ const App = () => {
           
           <nav className="space-y-2">
             <NavItem active={currentView === 'dashboard'} onClick={() => {setCurrentView('dashboard'); setMenuOpen(false);}} icon={<BarChart3 size={20}/>} label="Dashboard" />
-            <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tests</div>
+            <div className="pt-4 pb-2 text-xs font-semibold text-stone-500 uppercase tracking-wider">Tests</div>
             <NavItem active={currentView === 'reaction'} onClick={() => {setCurrentView('reaction'); setMenuOpen(false);}} icon={<Zap size={20}/>} label="Reaction Time" />
             <NavItem active={currentView === 'pattern'} onClick={() => {setCurrentView('pattern'); setMenuOpen(false);}} icon={<Grid size={20}/>} label="Pattern Match" />
             <NavItem active={currentView === 'stroop'} onClick={() => {setCurrentView('stroop'); setMenuOpen(false);}} icon={<LayoutGrid size={20}/>} label="Stroop Test" />
@@ -195,7 +195,7 @@ const App = () => {
              <Brain className="w-6 h-6" />
              <span className="font-bold text-white">Cognitive Test</span>
           </div>
-          <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-slate-300">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-stone-300">
             {menuOpen ? <X /> : <Menu />}
           </button>
         </div>
@@ -214,7 +214,7 @@ const NavItem = ({active, onClick, icon, label}: any) => (
   <button 
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-      ${active ? 'bg-stone-800 text-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+      ${active ? 'bg-stone-800 text-indigo-400' : 'text-stone-400 hover:bg-stone-800 hover:text-stone-200'}
     `}
   >
     {icon}
@@ -227,11 +227,11 @@ const TestCard = ({title, desc, icon, onClick}: any) => (
     onClick={onClick}
     className="group bg-stone-800 p-6 rounded-xl border border-stone-700 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer flex flex-col items-start"
   >
-    <div className="p-3 bg-slate-900 rounded-lg mb-4 group-hover:scale-110 transition-transform">
+    <div className="p-3 bg-stone-900 rounded-lg mb-4 group-hover:scale-110 transition-transform">
       {icon}
     </div>
     <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-    <p className="text-slate-400 text-sm">{desc}</p>
+    <p className="text-stone-400 text-sm">{desc}</p>
     <div className="mt-4 text-xs font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
       START TEST <CheckCircle2 size={12} />
     </div>
@@ -244,7 +244,7 @@ const TestWrapper = ({children, title, onBack}: any) => (
       <Button variant="ghost" onClick={onBack} size="sm">← Back to Dashboard</Button>
       <h2 className="text-2xl font-bold text-white">{title}</h2>
     </div>
-    <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 p-8 relative overflow-hidden flex flex-col">
+    <div className="flex-1 bg-stone-900/50 rounded-2xl border border-stone-800 p-8 relative overflow-hidden flex flex-col">
       {children}
     </div>
   </div>

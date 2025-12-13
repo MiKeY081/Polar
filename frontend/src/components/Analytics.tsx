@@ -89,7 +89,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
       <div className="grid md:grid-cols-2 gap-8">
         
         {/* Weekly Drift Timeline */}
-        <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl shadow-lg border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-6">Performance Timeline</h3>
           {timelineData.length > 0 ? (
             <div className="">
@@ -106,14 +106,14 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
                 </LineChart>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400">
+            <div className="h-64 flex items-center justify-center text-stone-400">
               <p>Complete Reaction Time or Stroop tests to view timeline data</p>
             </div>
           )}
         </div>
 
         {/* Cognitive Radar */}
-        <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl shadow-lg border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-6">Cognitive Profile</h3>
           {radarData.some(d => d.A > 0) ? (
             <div className="w-full">
@@ -125,7 +125,7 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
                 </RadarChart>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400">
+            <div className="h-64 flex items-center justify-center text-stone-400">
               <p>Complete cognitive tests to view your profile</p>
             </div>
           )}
@@ -134,12 +134,12 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 
       {/* Anomalies & Summary */}
       {latestMetrics && (
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+        <div className="bg-stone-800 p-6 rounded-xl border border-stone-700">
           <h3 className="text-lg font-semibold text-white mb-4">AI Analysis</h3>
-          <p className="text-slate-300 mb-4 leading-relaxed">{latestMetrics.summary}</p>
+          <p className="text-stone-300 mb-4 leading-relaxed">{latestMetrics.summary}</p>
           {latestMetrics.anomalies.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Anomalies Detected</h4>
+              <h4 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-2">Anomalies Detected</h4>
               <ul className="list-disc list-inside text-yellow-500/90 text-sm space-y-1">
                 {latestMetrics.anomalies.map((a, i) => <li key={i}>{a}</li>)}
               </ul>
@@ -152,8 +152,8 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
 };
 
 const MetricCard: React.FC<{title: string, value: number, color: string}> = ({ title, value, color }) => (
-  <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-    <div className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</div>
-    <div className={`text-3xl font-bold ${color}`}>{value}<span className="text-sm text-slate-600 ml-1">/100</span></div>
+  <div className="bg-stone-800 p-4 rounded-xl border border-stone-700">
+    <div className="text-stone-500 text-xs uppercase font-bold tracking-wider mb-1">{title}</div>
+    <div className={`text-3xl font-bold ${color}`}>{value}<span className="text-sm text-stone-600 ml-1">/100</span></div>
   </div>
 );
