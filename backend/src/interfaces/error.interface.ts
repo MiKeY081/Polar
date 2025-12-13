@@ -10,5 +10,6 @@ export class ErrorHandler extends Error {
 
 export const TryCatch =
     (func: ControllerType) =>
-    (req: Request, res: Response, next: NextFunction) =>
-        Promise.resolve(func(req, res, next)).catch(next);
+    (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        return Promise.resolve(func(req, res, next) as any).catch(next) as Promise<void>;
+    };
