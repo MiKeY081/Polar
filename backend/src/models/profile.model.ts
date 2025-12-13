@@ -23,6 +23,13 @@ const AdvancedMetricsSchema = new Schema(
     analysisTimestamp: { type: Number, required: true },
     summary: { type: String, required: true },
     anomalies: { type: [String], default: [] },
+    // ML-derived cognitive scores
+    speed: { type: Number },
+    memory: { type: Number },
+    focus: { type: Number },
+    flexibility: { type: Number },
+    attention: { type: Number },
+    drift: { type: Number },
   },
   { _id: false }
 );
@@ -56,6 +63,12 @@ export interface AdvancedMetricsDoc {
   analysisTimestamp: number;
   summary: string;
   anomalies: string[];
+  speed?: number;
+  memory?: number;
+  focus?: number;
+  flexibility?: number;
+  attention?: number;
+  drift?: number;
 }
 
 export interface ProfileDoc extends mongoose.Document {

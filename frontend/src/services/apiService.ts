@@ -65,4 +65,31 @@ export const profileApi = {
   },
 };
 
+// ML Analysis API
+const ML_API_BASE = import.meta.env.VITE_ML_API_URL || "http://127.0.0.1:5000";
+
+export const mlApi = {
+  analyze: async (results: TestResult[]) => {
+    try {
+      const response = await fetch(`${ML_API_BASE}/analyze`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ results }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`ML API failed with status ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("ML Analysis failed:", error);
+      // Return null on failure so we can fallback gracefully
+      return null;
+    }
+  },
+};
+
 export const getApiBase = () => API_BASE;

@@ -10,8 +10,10 @@ class Stage1NN(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(9, 128),
             nn.ReLU(),
+            nn.Dropout(0.2),
             nn.Linear(128, 64),
             nn.ReLU(),
+            nn.Dropout(0.2),
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, 4),
@@ -27,8 +29,10 @@ class Stage2NN(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(4, 128),
             nn.ReLU(),
+            nn.Dropout(0.2),
             nn.Linear(128, 64),
             nn.ReLU(),
+            nn.Dropout(0.2),
             nn.Linear(64, 32),
             nn.ReLU(),
             nn.Linear(32, 6),
@@ -41,16 +45,35 @@ class Stage2NN(nn.Module):
 # ---------- Load ----------
 stage1 = Stage1NN()
 stage2 = Stage2NN()
-
-stage1.load_state_dict(torch.load("best_stage1.pth", map_location="cpu"))
-stage2.load_state_dict(torch.load("best_stage2.pth", map_location="cpu"))
+try:
+    state1 = torch.load("best_stage1.pth", map_location="cpu")
+    stage1.load_state_dict(state1)
+except Exception as e:
+    print(f"Warning: could not load best_stage1.pth ({e}). Using fresh weights.")
+try:
+    state2 = torch.load("best_stage2.pth", map_location="cpu")
+    stage2.load_state_dict(state2)
+except Exception as e:
+    print(f"Warning: could not load best_stage2.pth ({e}). Using fresh weights.")
 
 stage1.eval()
 stage2.eval()
 
-scaler_X = joblib.load("scaler_X.pkl")
-scaler_y1 = joblib.load("scaler_y1.pkl")
-scaler_y2 = joblib.load("scaler_y2.pkl")
+try:
+    scaler_X = joblib.load("scaler_X.pkl")
+    scaler_y1 = joblib.load("scaler_y1.pkl")
+    scaler_y2 = joblib.load("scaler_y2.pkl")
+except Exception as e:
+    # Fallback: identity scaling if scalers unavailable
+    print(f"Warning: could not load scalers ({e}). Using identity scaling.")
+    class IdentityScaler:
+        def transform(self, X):
+            return np.array(X, dtype=np.float32)
+        def inverse_transform(self, Y):
+            return np.array(Y, dtype=np.float32)
+    scaler_X = IdentityScaler()
+    scaler_y1 = IdentityScaler()
+    scaler_y2 = IdentityScaler()
 
 # ---------- Predict ----------
 def predict(features):

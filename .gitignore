@@ -1,0 +1,11 @@
+./machine_learning/__pycache__/*
+./machine_learning/venv/*
+./machine_learning/.vscode/*
+./backend/node_modules/*
+./backend/.env
+./frontend/node_modules/*
+../machine_learning/__pycache__/
+../machine_learning/venv/
+../machine_learning/.vscode/
+../backend/node_modules/
+../backend/.env
