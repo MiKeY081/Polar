@@ -11,31 +11,57 @@ interface Props {
 }
 
 export const Analytics: React.FC<Props> = ({ profile }) => {
-  const { results, latestMetrics } = profile;
+  const { results , latestMetrics } = profile;
 
   // Prepare Data for Timeline (Reaction Time & Accuracy)
-  const timelineData = results
-    .filter(r => r.type === TestType.REACTION || r.type === TestType.STROOP)
+  // Separate and map each metric independently to avoid undefined values
+  const reactionTimeData = results
+    .filter(r => r.type === TestType.REACTION)
     .map((r, i) => ({
-      id: i,
+      id: `reaction-${i}`,
       date: new Date(r.timestamp).toLocaleDateString(),
-      reactionTime: r.type === TestType.REACTION ? r.score : null,
-      attentionScore: r.type === TestType.STROOP ? r.accuracy : null,
-    })).slice(-10); // Last 10 sessions
+      reactionTime: r.score,
+    }))
+    .slice(-10);
+
+  const attentionScoreData = results
+    .filter(r => r.type === TestType.STROOP)
+    .map((r, i) => ({
+      id: `stroop-${i}`,
+      date: new Date(r.timestamp).toLocaleDateString(),
+      attentionScore: r.accuracy,
+    }))
+    .slice(-10);
+
+  // Combine and merge by date
+  const timelineData = [...reactionTimeData, ...attentionScoreData]
+    .reduce((acc: any[], item) => {
+      const existing = acc.find(d => d.date === item.date);
+      if (existing) {
+        return acc.map(d => d.date === item.date ? { ...d, ...item } : d);
+      }
+      return [...acc, item];
+    }, [])
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-10);
+
 
   // Radar Data for Cognitive Profile (Normalized)
   // We aggregate latest scores for each category
-  const getLatestScore = (type: TestType) => {
+  const getLatestScore = (type: string) => {
     const runs = results.filter(r => r.type === type);
     if (runs.length === 0) return 0;
-    return runs[runs.length - 1].accuracy || 50; // Fallback
+    return Math.min(100, runs[runs.length - 1].accuracy || 50); // Fallback to 50, cap at 100
   };
 
+  const reactionTestResult = results.find(r => r.type === TestType.REACTION);
+  const speedScore = reactionTestResult ? Math.min(100, 10000 / (reactionTestResult.score || 500)) : 0;
+
   const radarData = [
-    { subject: 'Speed', A: Math.min(100, 10000 / (results.find(r => r.type === TestType.REACTION)?.score || 500)), fullMark: 100 },
+    { subject: 'Speed', A: speedScore, fullMark: 100 },
     { subject: 'Memory', A: getLatestScore(TestType.PATTERN), fullMark: 100 },
     { subject: 'Attention', A: getLatestScore(TestType.STROOP), fullMark: 100 },
-    { subject: 'Flexibility', A: getLatestScore(TestType.SEQUENCE), fullMark: 100 }, // Using sequence as flexibility proxy
+    { subject: 'Flexibility', A: getLatestScore(TestType.SEQUENCE), fullMark: 100 },
     { subject: 'Focus', A: getLatestScore(TestType.NPBACK), fullMark: 100 },
   ];
 
@@ -57,36 +83,48 @@ export const Analytics: React.FC<Props> = ({ profile }) => {
         {/* Weekly Drift Timeline */}
         <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-white mb-6">Performance Timeline</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timelineData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="date" stroke="#94a3b8" tick={{fontSize: 12}} />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                />
-                <Legend />
-                <Line type="monotone" dataKey="reactionTime" stroke="#3b82f6" name="Reaction (ms)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="attentionScore" stroke="#22c55e" name="Attention (%)" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {timelineData.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={timelineData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="date" stroke="#94a3b8" tick={{fontSize: 12}} />
+                  <YAxis stroke="#94a3b8" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="reactionTime" stroke="#3b82f6" name="Reaction (ms)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="attentionScore" stroke="#22c55e" name="Attention (%)" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-slate-400">
+              <p>Complete Reaction Time or Stroop tests to view timeline data</p>
+            </div>
+          )}
         </div>
 
         {/* Cognitive Radar */}
         <div className="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-white mb-6">Cognitive Profile</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                <PolarGrid stroke="#334155" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
-                <Radar name="User" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
+          {radarData.some(d => d.A > 0) ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                  <PolarGrid stroke="#334155" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" />
+                  <Radar name="User" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-slate-400">
+              <p>Complete cognitive tests to view your profile</p>
+            </div>
+          )}
         </div>
       </div>
 
