@@ -1,35 +1,253 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect, Suspense } from 'react';
+import { Brain, Activity, Zap, Grid, LayoutGrid, Timer, BarChart3, Menu, X, CheckCircle2 } from 'lucide-react';
+import { ReactionTest } from './components/tests/ReactionTest';
+import { PatternTest } from './components/tests/PatternTest';
+import { StroopTest } from './components/tests/StroopTest';
+import { SequenceTest } from './components/tests/SequenceTest';
+import { NBackTest } from './components/tests/NBackTest';
+import { Button } from './components/ui/button';
+import { getProfile, saveResult, saveMetrics, clearData } from './services/storageService';
+import { analyzePerformance } from './services/geminiService';import type { TestResult, UserProfile } from '@/types';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Lazy load Analytics to prevent Recharts import issues from crashing the whole app
+const Analytics = React.lazy(() => import('./components/Analytics').then(module => ({ default: module.Analytics })));
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+// Simple Error Boundary for Analytics
+class AnalyticsErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_error: any) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Analytics failed to load:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center bg-slate-800 rounded-xl border border-red-500/30">
+          <BarChart3 className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">Analytics Visualization Unavailable</h3>
+          <p className="text-slate-400">The chart library failed to load. Your test data is still being saved.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
-export default App
+// Simple Router State
+type View = 'dashboard' | 'reaction' | 'pattern' | 'stroop' | 'sequence' | 'nback';
+
+const App = () => {
+  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [profile, setProfile] = useState<UserProfile>(getProfile());
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Refresh profile on mount to get latest from localstorage
+    setProfile(getProfile());
+  }, []);
+
+  const handleTestComplete = (result: TestResult) => {
+    const updated = saveResult(result);
+    setProfile(updated);
+    setCurrentView('dashboard');
+  };
+
+  const handleAIAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const metrics = await analyzePerformance(profile.results);
+      const updated = saveMetrics(metrics);
+      setProfile(updated);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const clearHistory = () => {
+    if(confirm("Are you sure you want to clear all data?")) {
+      clearData();
+      setProfile(getProfile());
+    }
+  };
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'reaction': return <TestWrapper title="Reaction Time" onBack={() => setCurrentView('dashboard')}><ReactionTest onComplete={handleTestComplete} /></TestWrapper>;
+      case 'pattern': return <TestWrapper title="Pattern Recognition" onBack={() => setCurrentView('dashboard')}><PatternTest onComplete={handleTestComplete} /></TestWrapper>;
+      case 'stroop': return <TestWrapper title="Stroop Test" onBack={() => setCurrentView('dashboard')}><StroopTest onComplete={handleTestComplete} /></TestWrapper>;
+      case 'sequence': return <TestWrapper title="Sequence Memory" onBack={() => setCurrentView('dashboard')}><SequenceTest onComplete={handleTestComplete} /></TestWrapper>;
+      case 'nback': return <TestWrapper title="N-Back Test" onBack={() => setCurrentView('dashboard')}><NBackTest onComplete={handleTestComplete} /></TestWrapper>;
+      default: return (
+        <div className="space-y-8 animate-fade-in">
+          
+          {/* Header Stats */}
+          <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-8 shadow-xl border border-slate-700/50 relative overflow-hidden">
+             <div className="relative z-10">
+               <h1 className="text-3xl font-bold text-white mb-2">Welcome Back, {profile.name}</h1>
+               <p className="text-indigo-200 mb-6 max-w-xl">
+                 Your cognitive health requires consistent training. You've completed {profile.results.length} tests so far.
+               </p>
+               <div className="flex gap-4">
+                 <Button onClick={handleAIAnalysis} disabled={isAnalyzing || profile.results.length === 0}>
+                   {isAnalyzing ? "Analyzing..." : "Generate AI Analysis"}
+                 </Button>
+                 <Button variant="secondary" onClick={clearHistory}>Reset Data</Button>
+               </div>
+             </div>
+             <Brain className="absolute right-0 top-0 w-64 h-64 text-white/5 -translate-y-12 translate-x-12" />
+          </div>
+
+          {/* Test Selector Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+             <TestCard 
+               title="Reaction Time" 
+               desc="Measure raw processing speed and alertness." 
+               icon={<Zap className="text-yellow-400" />} 
+               onClick={() => setCurrentView('reaction')} 
+             />
+             <TestCard 
+               title="Pattern Recognition" 
+               desc="Test visual memory and pattern recall." 
+               icon={<Grid className="text-blue-400" />} 
+               onClick={() => setCurrentView('pattern')} 
+             />
+             <TestCard 
+               title="Stroop Interference" 
+               desc="Challenge response inhibition and focus." 
+               icon={<LayoutGrid className="text-red-400" />} 
+               onClick={() => setCurrentView('stroop')} 
+             />
+             <TestCard 
+               title="Sequence Memory" 
+               desc="Track working memory capacity." 
+               icon={<Activity className="text-green-400" />} 
+               onClick={() => setCurrentView('sequence')} 
+             />
+             <TestCard 
+               title="N-Back Test" 
+               desc="Advanced working memory load test." 
+               icon={<Timer className="text-purple-400" />} 
+               onClick={() => setCurrentView('nback')} 
+             />
+          </div>
+
+          {/* Analytics Section */}
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <BarChart3 /> Analytics Dashboard
+            </h2>
+            {profile.results.length > 0 ? (
+              <AnalyticsErrorBoundary>
+                <Suspense fallback={<div className="p-12 text-center text-slate-500 bg-slate-800 rounded-xl">Loading Analytics Visualization...</div>}>
+                  <Analytics profile={profile} />
+                </Suspense>
+              </AnalyticsErrorBoundary>
+            ) : (
+              <div className="bg-slate-800/50 border border-slate-700 border-dashed rounded-xl p-12 text-center text-slate-500">
+                Complete some tests to view analytics.
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex">
+      {/* Sidebar Navigation (Desktop) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6">
+          <div className="flex items-center gap-3 text-indigo-400 mb-8">
+            <Brain className="w-8 h-8" />
+            <span className="text-xl font-bold tracking-tight text-white">NeuroMetric</span>
+          </div>
+          
+          <nav className="space-y-2">
+            <NavItem active={currentView === 'dashboard'} onClick={() => {setCurrentView('dashboard'); setMenuOpen(false);}} icon={<BarChart3 size={20}/>} label="Dashboard" />
+            <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tests</div>
+            <NavItem active={currentView === 'reaction'} onClick={() => {setCurrentView('reaction'); setMenuOpen(false);}} icon={<Zap size={20}/>} label="Reaction Time" />
+            <NavItem active={currentView === 'pattern'} onClick={() => {setCurrentView('pattern'); setMenuOpen(false);}} icon={<Grid size={20}/>} label="Pattern Match" />
+            <NavItem active={currentView === 'stroop'} onClick={() => {setCurrentView('stroop'); setMenuOpen(false);}} icon={<LayoutGrid size={20}/>} label="Stroop Test" />
+            <NavItem active={currentView === 'sequence'} onClick={() => {setCurrentView('sequence'); setMenuOpen(false);}} icon={<Activity size={20}/>} label="Sequence" />
+            <NavItem active={currentView === 'nback'} onClick={() => {setCurrentView('nback'); setMenuOpen(false);}} icon={<Timer size={20}/>} label="N-Back" />
+          </nav>
+        </div>
+      </aside>
+
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMenuOpen(false)} />
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8">
+        <div className="lg:hidden flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2 text-indigo-400">
+             <Brain className="w-6 h-6" />
+             <span className="font-bold text-white">NeuroMetric</span>
+          </div>
+          <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-slate-300">
+            {menuOpen ? <X /> : <Menu />}
+          </button>
+        </div>
+        
+        <div className="max-w-7xl mx-auto">
+          {renderContent()}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// Sub-components for clean Layout
+const NavItem = ({active, onClick, icon, label}: any) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+      ${active ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+    `}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
+const TestCard = ({title, desc, icon, onClick}: any) => (
+  <div 
+    onClick={onClick}
+    className="group bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer flex flex-col items-start"
+  >
+    <div className="p-3 bg-slate-900 rounded-lg mb-4 group-hover:scale-110 transition-transform">
+      {icon}
+    </div>
+    <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+    <p className="text-slate-400 text-sm">{desc}</p>
+    <div className="mt-4 text-xs font-semibold text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+      START TEST <CheckCircle2 size={12} />
+    </div>
+  </div>
+);
+
+const TestWrapper = ({children, title, onBack}: any) => (
+  <div className="h-[calc(100vh-100px)] flex flex-col">
+    <div className="flex items-center gap-4 mb-6">
+      <Button variant="ghost" onClick={onBack} size="sm">← Back to Dashboard</Button>
+      <h2 className="text-2xl font-bold text-white">{title}</h2>
+    </div>
+    <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 p-8 relative overflow-hidden flex flex-col">
+      {children}
+    </div>
+  </div>
+);
+
+export default App;
