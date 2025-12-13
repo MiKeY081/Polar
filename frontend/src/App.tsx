@@ -1,11 +1,11 @@
 import React, { useState, useEffect, Suspense } from 'react';
-import { Brain, Activity, Zap, Grid, LayoutGrid, Timer, BarChart3, Menu, X, CheckCircle2 } from 'lucide-react';
+import { Brain, Activity, Zap, Grid, LayoutGrid, Timer, BarChart3, Menu, X, CheckCircle2, BrainCogIcon } from 'lucide-react';
 import { ReactionTest } from './components/tests/ReactionTest';
 import { PatternTest } from './components/tests/PatternTest';
 import { StroopTest } from './components/tests/StroopTest';
 import { SequenceTest } from './components/tests/SequenceTest';
 import { NBackTest } from './components/tests/NBackTest';
-import { Button } from './components/ui/button';
+import { Button } from './components/Button';
 import { getProfile, saveResult, saveMetrics, clearData } from './services/storageService';
 import { analyzePerformance } from './services/geminiService';import type { TestResult, UserProfile } from '@/types';
 
@@ -103,7 +103,6 @@ const App = () => {
                  <Button variant="secondary" onClick={clearHistory}>Reset Data</Button>
                </div>
              </div>
-             <Brain className="absolute right-0 top-0 w-64 h-64 text-white/5 -translate-y-12 translate-x-12" />
           </div>
 
           {/* Test Selector Grid */}
@@ -147,12 +146,12 @@ const App = () => {
             </h2>
             {profile.results.length > 0 ? (
               <AnalyticsErrorBoundary>
-                <Suspense fallback={<div className="p-12 text-center text-slate-500 bg-slate-800 rounded-xl">Loading Analytics Visualization...</div>}>
+                <Suspense fallback={<div className="p-12 text-center text-slate-500 bg-stone-800 rounded-xl">Loading Analytics Visualization...</div>}>
                   <Analytics profile={profile} />
                 </Suspense>
               </AnalyticsErrorBoundary>
             ) : (
-              <div className="bg-slate-800/50 border border-slate-700 border-dashed rounded-xl p-12 text-center text-slate-500">
+              <div className="bg-stone-800/50 border border-stone-700 border-dashed rounded-xl p-12 text-center text-slate-500">
                 Complete some tests to view analytics.
               </div>
             )}
@@ -163,13 +162,13 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 flex">
+    <div className="min-h-screen bg-stone-900 text-slate-100 flex">
       {/* Sidebar Navigation (Desktop) */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-stone-900 border-r border-stone-800 transform transition-transform duration-300 lg:translate-x-0 ${menuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6">
           <div className="flex items-center gap-3 text-indigo-400 mb-8">
-            <Brain className="w-8 h-8" />
-            <span className="text-xl font-bold tracking-tight text-white">NeuroMetric</span>
+            <BrainCogIcon className="w-8 h-8 rotate-180" />
+            <span className="text-xl font-bold tracking-tight text-white">Cognitive Test</span>
           </div>
           
           <nav className="space-y-2">
@@ -194,7 +193,7 @@ const App = () => {
         <div className="lg:hidden flex items-center justify-between mb-6">
           <div className="flex items-center gap-2 text-indigo-400">
              <Brain className="w-6 h-6" />
-             <span className="font-bold text-white">NeuroMetric</span>
+             <span className="font-bold text-white">Cognitive Test</span>
           </div>
           <button onClick={() => setMenuOpen(!menuOpen)} className="p-2 text-slate-300">
             {menuOpen ? <X /> : <Menu />}
@@ -211,10 +210,11 @@ const App = () => {
 
 // Sub-components for clean Layout
 const NavItem = ({active, onClick, icon, label}: any) => (
+
   <button 
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-      ${active ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
+      ${active ? 'bg-stone-800 text-indigo-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'}
     `}
   >
     {icon}
@@ -225,7 +225,7 @@ const NavItem = ({active, onClick, icon, label}: any) => (
 const TestCard = ({title, desc, icon, onClick}: any) => (
   <div 
     onClick={onClick}
-    className="group bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer flex flex-col items-start"
+    className="group bg-stone-800 p-6 rounded-xl border border-stone-700 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer flex flex-col items-start"
   >
     <div className="p-3 bg-slate-900 rounded-lg mb-4 group-hover:scale-110 transition-transform">
       {icon}

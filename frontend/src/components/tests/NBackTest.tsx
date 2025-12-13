@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '../ui/button';
+import { Button } from '../Button';
 import type { TestResult } from '@/types';
 import { TestType } from '@/types';
 
