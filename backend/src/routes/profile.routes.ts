@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { isAuthorized } from "../middleware/auth.middleware";
 import { getProfile, saveResult, saveMetrics, clearData } from "../controller/profile.controller";
+import { isAuthorized } from "../middleware/auth.middleware";
 
 const router = Router();
 

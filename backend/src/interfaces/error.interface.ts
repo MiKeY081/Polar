@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, RequestHandler } from "express";
+import { NextFunction, Request, Response } from "express";
 import { ControllerType } from "../types/controller.types";
 
 export class ErrorHandler extends Error {
@@ -9,6 +9,7 @@ export class ErrorHandler extends Error {
 }
 
 export const TryCatch =
-    (func: ControllerType): RequestHandler =>
-    (req: Request, res: Response, next: NextFunction) =>
-        Promise.resolve(func(req, res, next)).catch(next);
+    (func: ControllerType) =>
+    (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        return Promise.resolve(func(req, res, next) as any).catch(next) as Promise<void>;
+    };
